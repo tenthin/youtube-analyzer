@@ -5,8 +5,25 @@ function Analyze() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const channel = result?.channel;
 
-  function handleSubmit(e) {
+  let name = "";
+  let subscribers = "";
+  let totalVideos = "";
+
+  if (channel) {
+    name = channel.name;
+
+    if (channel.subscribers) {
+      subscribers = channel.subscribers.toLocaleString();
+    } else {
+      subscribers = "Subscribers hidden";
+    }
+
+    totalVideos = channel.totalVideos;
+  }
+
+  async function handleSubmit(e) {
     e.preventDefault();
 
     if (!url.trim()) {
@@ -23,10 +40,28 @@ function Analyze() {
     setLoading(true);
     setResult(null);
 
-    setTimeout(() => {
+    try {
+      const response = await fetch("http://localhost:5000/analyze", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          url: url, // temporary
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Backend error");
+      }
+
+      const data = await response.json();
+      setResult(data);
+    } catch (err) {
+      setError("Something went wrong while analyzing.");
+    } finally {
       setLoading(false);
-      setResult(`Analysis completed for: ${url}`);
-    }, 1500);
+    }
   }
 
   return (
@@ -49,10 +84,11 @@ function Analyze() {
       </form>
       {error && <p className="text-red-600 mt-2">{error}</p>}
 
-      {result && (
+      {channel && (
         <div className="mt-6 p-4 border rounded">
-          <h3 className="font-semibold mb-2">Analysis Result</h3>
-          <p>{result}</p>
+          <h2 className="font-semibold text-lg">{name}</h2>
+          <p>{subscribers} subscribers</p>
+          <p>{totalVideos} total videos</p>
         </div>
       )}
     </div>
