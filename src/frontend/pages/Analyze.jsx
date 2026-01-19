@@ -45,8 +45,7 @@ function Analyze() {
     setResult(null);
 
     try {
-      const response = await fetch("https://youtube-analyzer-backend-qc38.onrender.com/analyze", {
-
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/analyze`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
