@@ -1,5 +1,18 @@
 import { useState } from "react";
 
+function normalizeYouTubeUrl(inputUrl) {
+  if (inputUrl.includes("youtu.be/")) {
+    const videoId = inputUrl.split("youtu.be/")[1].split("?")[0];
+    return `https://www.youtube.com/watch?v=${videoId}`;
+  }
+
+  if (inputUrl.includes("m.youtube.com")) {
+    return inputUrl.replace("m.youtube.com", "www.youtube.com");
+  }
+
+  return inputUrl;
+}
+
 function Analyze() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,8 +48,13 @@ function Analyze() {
       return;
     }
 
-    if (!url.includes("youtube.com")) {
-      setError("Please enter a valid Youtube URL");
+    const isYouTubeUrl =
+      url.includes("youtube.com") ||
+      url.includes("youtu.be") ||
+      url.includes("m.youtube.com");
+
+    if (!isYouTubeUrl) {
+      setError("Please enter a valid YouTube URL");
       return;
     }
 
@@ -45,15 +63,20 @@ function Analyze() {
     setResult(null);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/analyze`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const normalizedUrl = normalizeYouTubeUrl(url);
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/analyze`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify({
+            url: normalizedUrl,
+          }),
         },
-        body: JSON.stringify({
-          url: url, // temporary
-        }),
-      });
+      );
 
       if (!response.ok) {
         throw new Error("Backend error");
