@@ -1,94 +1,16 @@
 import { useState } from "react";
-
-function normalizeYouTubeUrl(inputUrl) {
-  if (inputUrl.includes("youtu.be/")) {
-    const videoId = inputUrl.split("youtu.be/")[1].split("?")[0];
-    return `https://www.youtube.com/watch?v=${videoId}`;
-  }
-
-  if (inputUrl.includes("m.youtube.com")) {
-    return inputUrl.replace("m.youtube.com", "www.youtube.com");
-  }
- 
-  return inputUrl;
-}
+import { useYouTubeAnalysis } from "../hooks/useYouTubeAnalysis";
 
 function Analyze() {
+  const { analyze, data: result, loading, error } = useYouTubeAnalysis();
   const [url, setUrl] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState("");
 
-  const channel = result?.channel;
-  const analysis = result?.analysis;
-  const type = result?.type;
-  const video = result?.video;
-
-  let name = "";
-  let subscribers = "";
-  let totalVideos = "";
-
-  if (channel) {
-    name = channel.name;
-
-    if (channel.subscribers) {
-      subscribers = channel.subscribers.toLocaleString();
-    } else {
-      subscribers = "Subscribers hidden";
-    }
-
-    totalVideos = channel.totalVideos;
-  }
+const { channel, analysis, type, video } = result || {};
 
   async function handleSubmit(e) {
     e.preventDefault();
-
-    if (!url.trim()) {
-      setError("Please enter a Youtube URL");
-      return;
-    }
-
-    const isYouTubeUrl =
-      url.includes("youtube.com") ||
-      url.includes("youtu.be") ||
-      url.includes("m.youtube.com");
-
-    if (!isYouTubeUrl) {
-      setError("Please enter a valid YouTube URL");
-      return;
-    }
-
-    setError("");
-    setLoading(true);
-    setResult(null);
-
-    try {
-      const normalizedUrl = normalizeYouTubeUrl(url);
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/analyze`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-
-          body: JSON.stringify({
-            url: normalizedUrl,
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error("Backend error");
-      }
-
-      const data = await response.json();
-      setResult(data);
-    } catch (err) {
-      setError("Something went wrong while analyzing.");
-    } finally {
-      setLoading(false);
-    }
+    await analyze(url);
+    setUrl("");
   }
 
   return (
@@ -111,7 +33,7 @@ function Analyze() {
       </form>
       {error && <p className="text-red-600 mt-2">{error}</p>}
 
-      {type === "channel" && analysis && (
+      {type === "channel" && channel && analysis && (
         <div className="mt-6 p-4 border rounded bg-gray-50">
           <h3 className="font-semibold text-lg mb-2">Channel AI Analysis</h3>
 
@@ -133,7 +55,7 @@ function Analyze() {
         </div>
       )}
 
-      {type === "video" && video && (
+      {type === "video" && video && analysis &&(
         <div className="mt-6 p-4 border rounded">
           <h2 className="font-semibold text-lg mb-2">{video.title}</h2>
 
