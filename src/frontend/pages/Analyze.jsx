@@ -9,7 +9,7 @@ function normalizeYouTubeUrl(inputUrl) {
   if (inputUrl.includes("m.youtube.com")) {
     return inputUrl.replace("m.youtube.com", "www.youtube.com");
   }
-
+ 
   return inputUrl;
 }
 
