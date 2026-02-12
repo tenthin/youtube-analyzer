@@ -1,10 +1,63 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { analyzeYouTube } from "../../services/api";
 
 export function useYouTubeAnalysis() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [history, setHistory] = useState([]);
+
+  const CACHE_KEY = "yt-analysis-cache";
+  const CACHE_EXPIRATION = 24 * 60 * 60 * 1000;
+
+  //Check data in local storage or not
+  function getCache() {
+    const raw = localStorage.getItem(CACHE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  }
+
+  //save data in local storage
+  function setCache(cache) {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+  }
+
+  //Clear history form Local storage
+  function clearHistory() {
+    localStorage.removeItem(CACHE_KEY);
+    setHistory([]);
+  }
+
+  // Remove history URL from History section
+  function removeFromHistory(url) {
+    const cache = getCache();
+    
+    delete cache[url];
+    setCache(cache);
+
+    setHistory(
+      Object.entries(cache)
+        .sort((a, b) => b[1].timestamp - a[1].timestamp)
+        .map(([url, value]) => ({
+          url,
+          ...value.meta,
+          timestamp: value.timestamp,
+        })),
+    );
+  }
+
+  useEffect(() => {
+    const cache = getCache();
+
+    const formattedHistory = Object.entries(cache)
+      .sort((a, b) => b[1].timestamp - a[1].timestamp)
+      .map(([url, value]) => ({
+        url,
+        ...value.meta,
+        timestamp: value.timestamp,
+      }));
+
+    setHistory(formattedHistory);
+  }, []);
 
   function normalizeYouTubeUrl(inputUrl) {
     if (inputUrl.includes("youtu.be/")) {
@@ -34,15 +87,67 @@ export function useYouTubeAnalysis() {
       setError("Please enter a valid YouTube URL");
       return;
     }
+
+    const normalizedURL = normalizeYouTubeUrl(url);
+
     setLoading(true);
     setError(null);
     setData(null);
 
     try {
-      const normalizedUrl = normalizeYouTubeUrl(url);
-      const result = await analyzeYouTube(normalizedUrl);
+      const cache = getCache();
+      if (cache[normalizedURL]) {
+        const { data, timestamp } = cache[normalizedURL];
+        const isExpired = Date.now() - timestamp > CACHE_EXPIRATION;
 
+        if (!isExpired) {
+          setData(data);
+          setLoading(false);
+          return;
+        }
+      }
+
+      const result = await analyzeYouTube(normalizedURL);
+
+      let meta = {};
+
+      if (result.type === "video") {
+        meta = {
+          title: result.video.title,
+          thumbnail: `https://img.youtube.com/vi/${normalizedURL.split("v=")[1]}/hqdefault.jpg`,
+          type: "video",
+        };
+      }
+
+      if (result.type === "channel") {
+        meta = {
+          title: result.channel.name,
+          thumbnail: null,
+          type: "channel",
+        };
+      }
+
+      const updatedCache = {
+        ...cache,
+        [normalizedURL]: {
+          data: result,
+          timestamp: Date.now(),
+          meta,
+        },
+      };
+
+      setCache(updatedCache);
       setData(result);
+      setHistory(
+        Object.entries(updatedCache)
+          .sort((a, b) => b[1].timestamp - a[1].timestamp)
+          .map(([url, value]) => ({
+            url,
+            ...value.meta,
+            timestamp: value.timestamp,
+          })),
+      );
+
     } catch (err) {
       setError("Something went wrong while analyzing.");
     } finally {
@@ -50,5 +155,13 @@ export function useYouTubeAnalysis() {
     }
   }
 
-  return { analyze, data, loading, error };
+  return {
+    analyze,
+    data,
+    loading,
+    error,
+    history,
+    clearHistory,
+    removeFromHistory,
+  };
 }
