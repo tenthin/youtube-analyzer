@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useYouTubeAnalysis } from "../hooks/useYouTubeAnalysis";
 import HistoryPanel from "../components/HistoryPanel";
+import SkeletonResult from "../components/SkeletonResult";
 
 function Analyze() {
   const {
@@ -48,9 +49,13 @@ function Analyze() {
         </button>
       </form>
       {error && <p className="text-red-600 mt-2">{error}</p>}
+
       <div className="flex gap-5">
         <div className="flex-[1.8]">
-          {type === "channel" && channel && analysis && (
+          {loading && <SkeletonResult/>}
+
+
+          {!loading && type === "channel" && channel && analysis && (
             <div className="mt-6 p-4 border rounded bg-gray-50">
               <h3 className="font-semibold text-lg mb-2">
                 Channel AI Analysis
@@ -74,7 +79,7 @@ function Analyze() {
             </div>
           )}
 
-          {type === "video" && video && analysis && (
+          {!loading && type === "video" && video && analysis && (
             <div className=" mt-6 p-4 border rounded">
               <h2 className="font-semibold text-lg mb-2">{video.title}</h2>
 
