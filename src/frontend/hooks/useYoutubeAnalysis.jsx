@@ -30,7 +30,7 @@ export function useYouTubeAnalysis() {
   // Remove history URL from History section
   function removeFromHistory(url) {
     const cache = getCache();
-    
+
     delete cache[url];
     setCache(cache);
 
@@ -147,9 +147,12 @@ export function useYouTubeAnalysis() {
             timestamp: value.timestamp,
           })),
       );
-
     } catch (err) {
-      setError("Something went wrong while analyzing.");
+      if (err.message === "Failed to fetch") {
+        setError("Cannot connect to server. Please try again later.");
+      } else {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
