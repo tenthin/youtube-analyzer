@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useYouTubeAnalysis } from "../hooks/useYouTubeAnalysis";
 import HistoryPanel from "../components/HistoryPanel";
 import SkeletonResult from "../components/SkeletonResult";
+import ErrorCard from "../components/ErrorCard";
 
 function Analyze() {
   const {
@@ -32,7 +33,8 @@ function Analyze() {
 
   return (
     <div>
-      <form onSubmit={handleSubmit}>
+      <h1 className="text-2xl font-bold text-center">YouTube Analyzer</h1>
+      <form onSubmit={handleSubmit} className="text-center">
         <input
           type="text"
           placeholder="Enter the URL..."
@@ -48,14 +50,18 @@ function Analyze() {
           {loading ? "Analyzing..." : "Analyze"}
         </button>
       </form>
-      {error && <p className="text-red-600 mt-2">{error}</p>}
 
       <div className="flex gap-5">
         <div className="flex-[1.8]">
-          {loading && <SkeletonResult/>}
+          {loading && <SkeletonResult />}
 
-
-          {!loading && type === "channel" && channel && analysis && (
+          {!loading && error && (
+            <ErrorCard
+              message={error}
+              onRetry={() => activeURL && analyze(activeURL)}
+            />
+          )}
+          {!loading && !error && type === "channel" && channel && analysis && (
             <div className="mt-6 p-4 border rounded bg-gray-50">
               <h3 className="font-semibold text-lg mb-2">
                 Channel AI Analysis
@@ -79,7 +85,7 @@ function Analyze() {
             </div>
           )}
 
-          {!loading && type === "video" && video && analysis && (
+          {!loading && !error && type === "video" && video && analysis && (
             <div className=" mt-6 p-4 border rounded">
               <h2 className="font-semibold text-lg mb-2">{video.title}</h2>
 
