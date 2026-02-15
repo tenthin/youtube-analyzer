@@ -16,6 +16,7 @@ function Analyze() {
   } = useYouTubeAnalysis();
   const [url, setUrl] = useState("");
   const [activeURL, setActiveURL] = useState(null);
+  const [activeTab, setActiveTab] = useState("overview");
 
   const { channel, analysis, type, video } = result || {};
 
@@ -23,13 +24,31 @@ function Analyze() {
     e.preventDefault();
     await analyze(url);
     setActiveURL(url);
+    setActiveTab("overview");
     setUrl("");
   }
 
   function handleHistorySelect(selectedURL) {
     setActiveURL(selectedURL);
     analyze(selectedURL);
+    setActiveTab("overview");
   }
+
+  function getTabClass(tabName) {
+  const base =
+    "py-2 px-4 rounded cursor-pointer transition duration-200";
+
+  const active =
+    "bg-black text-white";
+
+  const inactive =
+    "bg-gray-200 text-gray-700 hover:bg-gray-300";
+
+  return `${base} ${
+    activeTab === tabName ? active : inactive
+  }`;
+}
+
 
   return (
     <div>
@@ -87,45 +106,71 @@ function Analyze() {
 
           {!loading && !error && type === "video" && video && analysis && (
             <div className=" mt-6 p-4 border rounded">
-              <h2 className="font-semibold text-lg mb-2">{video.title}</h2>
-
-              <p className="text-sm text-gray-600 mb-1">
-                Uploaded by <strong>{video.channelName}</strong>
-              </p>
-
-              <p className="text-sm text-gray-600 mb-1">
-                Views: {video.views.toLocaleString()}
-              </p>
-
-              <p className="text-sm text-gray-600 mb-3">
-                Uploaded on: {new Date(video.uploadedAt).toDateString()}
-              </p>
-
-              <div className="mt-4 p-4 bg-gray-50 rounded">
-                <h3 className="font-semibold mb-2">AI Video Analysis</h3>
-
-                <p className="mb-2">
-                  <strong>Summary:</strong> {analysis.summary}
-                </p>
-
-                <p className="mb-2">
-                  <strong>Good comments:</strong> {analysis.goodCommentsPercent}
-                  %
-                </p>
-
-                <p className="mb-2">
-                  <strong>Bad comments:</strong> {analysis.badCommentsPercent}%
-                </p>
-
-                <p className="mb-2">
-                  <strong>Worth watching:</strong> {analysis.worthWatching}
-                </p>
-
-                <p>
-                  <strong>Suggestions:</strong>{" "}
-                  {analysis.improvementSuggestions}
-                </p>
+              <div className="flex gap-4 mb-3">
+                <button
+                  onClick={() => setActiveTab("overview")}
+                   className={getTabClass("overview")}
+                >
+                  Overview
+                </button>
+                <button
+                  onClick={() => setActiveTab("summary")}
+                   className={getTabClass("summary")}
+                >
+                  Summary
+                </button>
+                <button
+                  onClick={() => setActiveTab("sentiment")}
+                   className={getTabClass("sentiment")}
+                >
+                  Sentiment
+                </button>
               </div>
+              {activeTab === "overview" && (
+                <>
+                  <h2 className="font-semibold text-lg mb-2">{video.title}</h2>
+
+                  <p className="text-sm text-gray-600 mb-1">
+                    Uploaded by <strong>{video.channelName}</strong>
+                  </p>
+
+                  <p className="text-sm text-gray-600 mb-1">
+                    Views: {video.views.toLocaleString()}
+                  </p>
+
+                  <p className="text-sm text-gray-600 mb-3">
+                    Uploaded on: {new Date(video.uploadedAt).toDateString()}
+                  </p>
+                </>
+              )}
+              {activeTab === "summary" && (
+                <>
+                  <h3 className="font-semibold mb-2">AI Video Analysis</h3>
+                  <p className="mb-2">
+                    <strong>Summary:</strong> {analysis.summary}
+                  </p>{" "}
+                  <p className="mb-2">
+                    <strong>Worth watching:</strong> {analysis.worthWatching}
+                  </p>
+                  <p>
+                    <strong>Suggestions:</strong>{" "}
+                    {analysis.improvementSuggestions}
+                  </p>
+                </>
+              )}
+              {activeTab === "sentiment" && (
+                <div className="mt-4 p-4 bg-gray-50 rounded">
+                  <p className="mb-2">
+                    <strong>Good comments:</strong>{" "}
+                    {analysis.goodCommentsPercent}%
+                  </p>
+
+                  <p className="mb-2">
+                    <strong>Bad comments:</strong> {analysis.badCommentsPercent}
+                    %
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
