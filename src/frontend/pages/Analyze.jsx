@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useYouTubeAnalysis } from "../hooks/useYouTubeAnalysis";
 import HistoryPanel from "../components/HistoryPanel";
 import SkeletonResult from "../components/SkeletonResult";
@@ -18,7 +18,7 @@ function Analyze() {
   const [activeURL, setActiveURL] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
 
-  const { channel, analysis, type, video } = result || {};
+  const { channel, analysis, type, video, commentsDisabled } = result || {};
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -28,27 +28,24 @@ function Analyze() {
     setUrl("");
   }
 
-  function handleHistorySelect(selectedURL) {
-    setActiveURL(selectedURL);
-    analyze(selectedURL);
-    setActiveTab("overview");
-  }
+  const handleHistorySelect = useCallback(
+    (selectedURL) => {
+      setActiveURL(selectedURL);
+      analyze(selectedURL);
+      setActiveTab("overview");
+    },
+    [analyze],
+  );
 
   function getTabClass(tabName) {
-  const base =
-    "py-2 px-4 rounded cursor-pointer transition duration-200";
+    const base = "py-2 px-4 rounded cursor-pointer transition duration-200";
 
-  const active =
-    "bg-black text-white";
+    const active = "bg-black text-white";
 
-  const inactive =
-    "bg-gray-200 text-gray-700 hover:bg-gray-300";
+    const inactive = "bg-gray-200 text-gray-700 hover:bg-gray-300";
 
-  return `${base} ${
-    activeTab === tabName ? active : inactive
-  }`;
-}
-
+    return `${base} ${activeTab === tabName ? active : inactive}`;
+  }
 
   return (
     <div>
@@ -109,19 +106,19 @@ function Analyze() {
               <div className="flex gap-4 mb-3">
                 <button
                   onClick={() => setActiveTab("overview")}
-                   className={getTabClass("overview")}
+                  className={getTabClass("overview")}
                 >
                   Overview
                 </button>
                 <button
                   onClick={() => setActiveTab("summary")}
-                   className={getTabClass("summary")}
+                  className={getTabClass("summary")}
                 >
                   Summary
                 </button>
                 <button
                   onClick={() => setActiveTab("sentiment")}
-                   className={getTabClass("sentiment")}
+                  className={getTabClass("sentiment")}
                 >
                   Sentiment
                 </button>
@@ -160,15 +157,23 @@ function Analyze() {
               )}
               {activeTab === "sentiment" && (
                 <div className="mt-4 p-4 bg-gray-50 rounded">
-                  <p className="mb-2">
-                    <strong>Good comments:</strong>{" "}
-                    {analysis.goodCommentsPercent}%
-                  </p>
+                  {commentsDisabled ? (
+                    <p className="text-yellow-600 font-medium">
+                      Comments are disabled for this video.
+                    </p>
+                  ) : (
+                    <>
+                      <p className="mb-2">
+                        <strong>Good comments:</strong>{" "}
+                        {analysis.goodCommentsPercent}%
+                      </p>
 
-                  <p className="mb-2">
-                    <strong>Bad comments:</strong> {analysis.badCommentsPercent}
-                    %
-                  </p>
+                      <p className="mb-2">
+                        <strong>Bad comments:</strong>{" "}
+                        {analysis.badCommentsPercent}%
+                      </p>
+                    </>
+                  )}
                 </div>
               )}
             </div>

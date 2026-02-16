@@ -125,23 +125,39 @@ app.post("/analyze", async (req, res) => {
       };
 
       //  Fetch top comments
-      const commentsResponse = await axios.get(
-        "https://www.googleapis.com/youtube/v3/commentThreads",
-        {
-          params: {
-            part: "snippet",
-            videoId,
-            maxResults: 20,
-            order: "relevance",
-            textFormat: "plainText",
-            key: process.env.YOUTUBE_API_KEY,
-          },
-        },
-      );
+      let comments = [];
+      let commentsDisabled = false;
 
-      const comments = commentsResponse.data.items.map(
-        (item) => item.snippet.topLevelComment.snippet.textDisplay,
-      );
+      try {
+        const commentsResponse = await axios.get(
+          "https://www.googleapis.com/youtube/v3/commentThreads",
+          {
+            params: {
+              part: "snippet",
+              videoId,
+              maxResults: 20,
+              order: "relevance",
+              textFormat: "plainText",
+              key: process.env.YOUTUBE_API_KEY,
+            },
+          },
+        );
+
+        comments = commentsResponse.data.items.map(
+          (item) => item.snippet.topLevelComment.snippet.textDisplay,
+        );
+      } catch (err) {
+        if (err.response?.status === 403) {
+          commentsDisabled = true;
+          console.log("Comments unavailable for this video.");
+        } else {
+          console.error(
+            "Comment fetch error:",
+            err.response?.data || err.message,
+          );
+          commentsDisabled = true; // fallback instead of crashing
+        }
+      }
 
       //  AI prompt for video
       const aiPrompt = `
@@ -158,7 +174,7 @@ Video description:
 ${cleanVideo.description || "No description"}
 
 Viewer comments:
-${comments.join("\n")}
+${commentsDisabled ? "Comments are disabled." : comments.join("\n")}
 `;
 
       //  Call OpenAI
@@ -190,6 +206,7 @@ ${comments.join("\n")}
         type: "video",
         video: cleanVideo,
         analysis,
+        commentsDisabled,
       });
     }
 
@@ -306,7 +323,6 @@ Description: ${cleanChannel.description || "No description"}
       channel: cleanChannel,
       analysis,
     });
-
   } catch (error) {
     console.error(error.response?.data || error.message);
     res.status(500).json({ error: "Failed to analyze YouTube channel" });

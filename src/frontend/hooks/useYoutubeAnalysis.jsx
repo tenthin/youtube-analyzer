@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { analyzeYouTube } from "../../services/api";
 
 export function useYouTubeAnalysis() {
@@ -22,13 +22,13 @@ export function useYouTubeAnalysis() {
   }
 
   //Clear history form Local storage
-  function clearHistory() {
+  const clearHistory = useCallback(() => {
     localStorage.removeItem(CACHE_KEY);
     setHistory([]);
-  }
+  },[]);
 
   // Remove history URL from History section
-  function removeFromHistory(url) {
+  const removeFromHistory = useCallback((url) => {
     const cache = getCache();
 
     delete cache[url];
@@ -43,7 +43,7 @@ export function useYouTubeAnalysis() {
           timestamp: value.timestamp,
         })),
     );
-  }
+  },[]);
 
   useEffect(() => {
     const cache = getCache();
@@ -72,7 +72,8 @@ export function useYouTubeAnalysis() {
     return inputUrl;
   }
 
-  async function analyze(url) {
+   
+  const analyze = useCallback(async(url) => {
     if (!url.trim()) {
       setError("Please enter a YouTube URL");
       return;
@@ -156,7 +157,7 @@ export function useYouTubeAnalysis() {
     } finally {
       setLoading(false);
     }
-  }
+  },[]);
 
   return {
     analyze,

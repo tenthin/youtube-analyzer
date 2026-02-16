@@ -47,4 +47,4 @@ function HistoryPanel({ history, onSelect, onRemove, onClear, activeURL }) {
   );
 }
 
-export default HistoryPanel;
+export default React.memo(HistoryPanel);
