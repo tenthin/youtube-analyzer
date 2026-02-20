@@ -3,6 +3,7 @@ import { useYouTubeAnalysis } from "../hooks/useYouTubeAnalysis";
 import HistoryPanel from "../components/HistoryPanel";
 import SkeletonResult from "../components/SkeletonResult";
 import ErrorCard from "../components/ErrorCard";
+import SentimentChart from "../components/SentimentChart";
 
 function Analyze() {
   const {
@@ -163,12 +164,17 @@ function Analyze() {
                     </p>
                   ) : (
                     <>
-                      <p className="mb-2">
+                      <SentimentChart
+                        goodPercent={analysis.goodCommentsPercent}
+                        badPercent={analysis.badCommentsPercent}
+                      />
+
+                      <p className="mt-4">
                         <strong>Good comments:</strong>{" "}
                         {analysis.goodCommentsPercent}%
                       </p>
 
-                      <p className="mb-2">
+                      <p>
                         <strong>Bad comments:</strong>{" "}
                         {analysis.badCommentsPercent}%
                       </p>
