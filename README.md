@@ -1,122 +1,184 @@
-🚀 YouTube Analyzer (AI-Powered)
+# 🚀 YouTube Analyzer (AI-Powered Full-Stack Application)
 
-An AI-powered web application that analyzes YouTube videos and channels to help users decide whether content is worth watching or following.
+An AI-powered full-stack web application that analyzes YouTube videos and channels to help users decide whether content is worth watching or following.
 
-Users can paste any YouTube video or channel URL, and the app provides:
+Users can paste any YouTube video or channel URL and receive:
 
-Key statistics
+- Key statistics
+- Upload behavior insights
+- AI-generated summaries
+- Comment sentiment analysis (with interactive charts)
+- A clear “Worth Watching” or “Worth Following” verdict
 
-Upload behavior insights
+---
 
-AI-generated summaries
+## 🌟 Live Demo
 
-Sentiment analysis of comments
+> *(Add deployment link here once deployed)*
 
-A clear “worth watching” or “worth following” verdict
+---
 
-✨ Features
-🔹 Video Analysis
+## ✨ Core Features
 
-Video title, views, upload date, and channel name
+### 🎬 Video Analysis
 
-AI-generated video summary
+- Video metadata (title, views, upload date, channel)
+- AI-generated summary
+- Comment sentiment analysis
+- Interactive Bar & Pie charts (Recharts)
+- “Worth Watching” recommendation
+- Improvement suggestions
+- Graceful handling when comments are disabled
 
-Estimated good vs bad comment sentiment
+---
 
-“Worth watching” decision
+### 📺 Channel Analysis
 
-Suggestions to improve video quality and value
+- Channel metadata (subscribers, total videos, creation date)
+- Upload frequency detection (daily / weekly / bi-weekly / irregular)
+- AI-generated channel summary
+- Quality score (0–100)
+- “Worth Following” recommendation
 
-🔹 Channel Analysis
+---
 
-Channel name, subscribers, total videos
+## 🧠 Engineering Highlights
 
-Upload frequency (daily / weekly / bi-weekly / irregular)
+This project was designed with production-like considerations.
 
-AI-generated channel summary
+### 🔹 Custom React Hook Architecture
 
-Score (0–100) indicating overall channel quality
+`useYouTubeAnalysis` centralizes:
 
-“Worth following” recommendation
+- API communication
+- Loading state
+- Error handling
+- Caching
+- History management
 
-🧠 How It Works
+This keeps UI components clean and reusable.
 
-User enters a YouTube video or channel URL
+---
 
-Backend detects the URL type automatically
+### 🔹 Smart Caching Strategy
 
-Data is fetched using YouTube Data API
+- Results stored in localStorage
+- 24-hour cache expiration
+- Prevents redundant API calls
+- History sorted by timestamp
+- Remove individual entries or clear all
 
-AI analysis is generated using OpenAI
+---
 
-Frontend renders results dynamically based on input type
+### 🔹 Resilient Backend
 
-🛠 Tech Stack
+Handles real-world API edge cases:
 
-Frontend
+- Invalid URLs
+- Private or unavailable videos
+- Disabled comments (YouTube 403 handling)
+- AI JSON parsing failures
+- Network failures
+- Graceful degradation instead of crashing
 
-React (Vite)
+---
 
-Tailwind CSS
+### 🔹 Performance Optimizations
 
-Fetch API
+- `useCallback` for stable handler references
+- `React.memo` to prevent unnecessary re-renders
+- Controlled state-driven UI rendering
+- Separation of chart logic into reusable components
 
-Backend
+---
 
-Node.js
+### 🔹 Interactive Data Visualization
 
-Express
+- Recharts integration
+- Toggle between Bar and Pie sentiment charts
+- Responsive container layout
+- Clean UX-focused design
 
-YouTube Data API v3
+---
 
-OpenAI API (GPT-4o-mini)
+## 🛠 Tech Stack
 
-⚙️ Setup Instructions
-1. Clone the repository
+### Frontend
+
+- React (Vite)
+- Tailwind CSS
+- Recharts
+- Custom Hooks
+- Fetch API
+
+### Backend
+
+- Node.js
+- Express
+- YouTube Data API v3
+- OpenAI API (GPT-4o-mini)
+- Axios
+
+---
+
+## ⚙️ Setup Instructions
+
+### 1️⃣ Clone Repository
+
+```bash
 git clone https://github.com/your-username/youtube-analyzer.git
 cd youtube-analyzer
+```
 
-2. Backend setup
-cd src/backend
-npm install
+### 2️⃣ Backend Setup
+- cd src/backend
+- npm install
 
+### Create a .env file:
 
-Create a .env file:
+- YOUTUBE_API_KEY=your_youtube_api_key
+- OPENAI_API_KEY=your_openai_api_key
 
-YOUTUBE_API_KEY=your_youtube_api_key
-OPENAI_API_KEY=your_openai_api_key
+### Run backend:
+- node index.js
 
+### 3️⃣ Frontend Setup
+- npm install
+- npm run dev
 
-Run backend:
+### 🧩 Architecture Overview
+```bash
+-Frontend (React)
+    ↓
+-Custom Hook (useYouTubeAnalysis)
+    ↓
+-Backend (Express API)
+    ↓
+-YouTube Data API + OpenAI API
+```
 
-node index.js
+### 📌 Real-World Problems Solved
 
-3. Frontend setup
-npm install
-npm run dev
+- Handling YouTube comment 403 errors
 
-📌 Example Use Cases
+- Preventing backend crashes on partial API failure
 
-Decide whether a video is worth your time
+- Ensuring AI always returns safe structured JSON
 
-Analyze creator consistency and content quality
+- Avoiding duplicate API calls with caching
 
-Quickly understand unfamiliar YouTube channels
+- Designing flexible UI for different result types (video vs channel)
 
-Learn from comment sentiment and audience feedback
+### 🚀 Future Improvements
 
-🚧 Future Improvements
+- TypeScript migration
 
-Playlist analysis
+- Request cancellation (AbortController)
 
-Video transcript-based analysis
+- Transcript-based AI analysis
 
-User authentication
+- Rate limiting middleware
 
-Save analysis history
+- Authentication & saved accounts
 
-Compare multiple channels
-
-🧑‍💻 Author
-
-Built by Tenzin Thinley as a full-stack AI project.
+- Deployment (Vercel + Render)
