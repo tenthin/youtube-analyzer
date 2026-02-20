@@ -49,27 +49,54 @@ function Analyze() {
   }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-center">YouTube Analyzer</h1>
-      <form onSubmit={handleSubmit} className="text-center">
-        <input
-          type="text"
-          placeholder="Enter the URL..."
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          className="w-[400px] p-3"
-        />
-        <button
-          className="bg-black px-6 py-3 text-white rounded-lg"
-          type="submit"
-          disabled={loading}
-        >
-          {loading ? "Analyzing..." : "Analyze"}
-        </button>
-      </form>
+    <div className="max-w-6xl mx-auto  sm:px-6 ">
+      <div className="text-center mt-10 mb-4">
+        <h1 className="text-4xl font-bold mb-3">YouTube Analyzer</h1>
 
-      <div className="flex gap-5">
-        <div className="flex-[1.8]">
+        <p className="text-gray-600 max-w-xl mx-auto">
+          Instantly analyze any YouTube video or channel using AI. Get
+          summaries, sentiment insights, and a smart recommendation.
+        </p>
+      </div>
+      <div className="bg-white shadow-md rounded-xl p-6 ">
+        <form
+          onSubmit={handleSubmit}
+          className="text-center flex flex-col sm:flex-row justify-center gap-3 "
+        >
+          <input
+            type="text"
+            placeholder="Enter the URL..."
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            className="w-full max-w-xl p-3 border rounded-lg"
+          />
+          <button
+            className="bg-black hover:bg-red-800 transition duration-200 px-6 py-3 text-white rounded-lg w-full sm:w-auto cursor-pointer"
+            type="submit"
+            disabled={loading}
+          >
+            {loading ? "Analyzing..." : "Analyze"}
+          </button>
+        </form>
+      </div>
+      <div className="text-sm text-gray-500 mt-2">
+        Try:
+        <button
+          onClick={() => setUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ")}
+          className="ml-2 underline hover:text-black"
+        >
+          Sample Video
+        </button>
+        |
+        <button
+          onClick={() => setUrl("https://www.youtube.com/@MrBeast")}
+          className="ml-2 underline hover:text-black"
+        >
+          Sample Channel
+        </button>
+      </div>
+      <div className="flex gap-5 flex-col lg:flex-row mt-8">
+        <div className="w-full lg:w-2/3">
           {loading && <SkeletonResult />}
 
           {!loading && error && (
@@ -78,8 +105,16 @@ function Analyze() {
               onRetry={() => activeURL && analyze(activeURL)}
             />
           )}
+          {!loading && !error && !result && (
+            <div className="mt-6 p-8 text-center rounded-lg bg-white shadow-sm">
+              <h3 className="text-lg font-semibold mb-2">Ready to analyze?</h3>
+              <p className="text-gray-600">
+                Paste a YouTube video or channel link above to get started.
+              </p>
+            </div>
+          )}
           {!loading && !error && type === "channel" && channel && analysis && (
-            <div className="mt-6 p-4 border rounded bg-gray-50">
+            <div className="mt-6 p-4 bg-white shadow-sm rounded-lg p-6">
               <h3 className="font-semibold text-lg mb-2">
                 Channel AI Analysis
               </h3>
@@ -103,8 +138,8 @@ function Analyze() {
           )}
 
           {!loading && !error && type === "video" && video && analysis && (
-            <div className=" mt-6 p-4 border rounded">
-              <div className="flex gap-4 mb-3">
+            <div className=" mt-6 p-4 rounded-lg bg-white shadow-sm">
+              <div className="flex flex-wrap gap-3 mb-4">
                 <button
                   onClick={() => setActiveTab("overview")}
                   className={getTabClass("overview")}
@@ -185,13 +220,15 @@ function Analyze() {
             </div>
           )}
         </div>
-        <HistoryPanel
-          history={history}
-          onSelect={handleHistorySelect}
-          onRemove={removeFromHistory}
-          onClear={clearHistory}
-          activeURL={activeURL}
-        />
+        <div className="w-full lg:w-1/3 bg-white shadow-sm rounded-xl">
+          <HistoryPanel
+            history={history}
+            onSelect={handleHistorySelect}
+            onRemove={removeFromHistory}
+            onClear={clearHistory}
+            activeURL={activeURL}
+          />
+        </div>
       </div>
     </div>
   );
