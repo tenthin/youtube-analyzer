@@ -12,10 +12,12 @@ Users can paste any YouTube video or channel URL and receive:
 
 ---
 
+```
 ## 🌟 Live Demo
 
-> *(Add deployment link here once deployed)*
-
+🔗 **Live Site:** https://youtube-analyzer-01.netlify.app/  
+📂 **Repository:** https://github.com/tenthin/youtube-analyzer
+```
 ---
 
 ## ✨ Core Features
@@ -171,7 +173,6 @@ cd youtube-analyzer
 
 ### 🚀 Future Improvements
 
-- TypeScript migration
 
 - Request cancellation (AbortController)
 
