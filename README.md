@@ -139,7 +139,7 @@ cd youtube-analyzer
 ### Create a .env file:
 
 - YOUTUBE_API_KEY=your_youtube_api_key
-- OPENAI_API_KEY=your_openai_api_key
+- GOOGLE_API_KEY=your_google_api_key
 
 ### Run backend:
 - node index.js
