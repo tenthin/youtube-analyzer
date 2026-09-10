@@ -1,0 +1,6 @@
+[build]
+  buildCommand = "cd src/backend && npm install"
+
+[deploy]
+  startCommand = "cd src/backend && node index.js"
+  healthcheckPath = "/"
