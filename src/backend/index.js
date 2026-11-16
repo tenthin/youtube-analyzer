@@ -18,148 +18,163 @@ app.use(express.json());
 
 // Health check
 app.get("/", (req, res) => {
-    res.send("YouTube Analyzer backend running");
+  res.send("YouTube Analyzer backend running");
 });
 
 app.post("/analyze", async (req, res) => {
-    const { url } = req.body;
+  const { url } = req.body;
 
-           // 1 Validate input
-           if (!url) {
-                 return res.status(400).json({ error: "URL is required" });
-           }
+  // 1 Validate input
+  if (!url) {
+    return res.status(400).json({ error: "URL is required" });
+  }
 
-           try {
-                 let channelId = null;
-                 let videoId = null;
+  try {
+    let channelId = null;
+    let videoId = null;
 
-      // Detect video URL
-      if (url.includes("watch?v=") || url.includes("youtu.be")) {
-              if (url.includes("watch?v=")) {
-                        videoId = new URL(url).searchParams.get("v");
-              } else {
-                        videoId = url.split("youtu.be/")[1];
-              }
+    // Detect video URL
+    //       if (url.includes("watch?v=") || url.includes("youtu.be")) {
+    //               if (url.includes("watch?v=")) {
+    //                         videoId = new URL(url).searchParams.get("v");
+    //               } else {
+    //                         videoId = url.split("youtu.be/")[1];
+    //               }
+    //       }
+    if (
+      url.includes("watch?v=") ||
+      url.includes("youtu.be") ||
+      url.includes("/shorts/")
+    ) {
+      const parsedUrl = new URL(url);
+
+      if (parsedUrl.hostname === "youtu.be") {
+        videoId = parsedUrl.pathname.split("/")[1];
+      } else if (parsedUrl.pathname.startsWith("/shorts/")) {
+        videoId = parsedUrl.pathname.split("/")[2];
+      } else {
+        videoId = parsedUrl.searchParams.get("v");
+      }
+    }
+
+    // 2 Detect channel ID URL
+    else if (url.includes("/channel/")) {
+      channelId = url.split("/channel/")[1].split("/")[0];
+    }
+
+    // Detect handle URL (@username)
+    else if (url.includes("/@")) {
+      const handle = url.split("/@")[1].split("/")[0];
+
+      const handleResponse = await axios.get(
+        "https://www.googleapis.com/youtube/v3/search",
+        {
+          params: {
+            part: "snippet",
+            q: handle,
+            type: "channel",
+            key: process.env.YOUTUBE_API_KEY,
+          },
+        },
+      );
+
+      if (!handleResponse.data.items.length) {
+        return res.status(404).json({ error: "Channel not found" });
       }
 
-      // 2 Detect channel ID URL
-      else if (url.includes("/channel/")) {
-              channelId = url.split("/channel/")[1].split("/")[0];
+      channelId = handleResponse.data.items[0].snippet.channelId;
+    }
+
+    // Unsupported URL
+    else {
+      return res.status(400).json({ error: "Unsupported YouTube URL" });
+    }
+
+    // 3 Get channelId from video
+    if (!channelId) {
+      const videoResponse = await axios.get(
+        "https://www.googleapis.com/youtube/v3/videos",
+        {
+          params: {
+            part: "snippet",
+            id: videoId,
+            key: process.env.YOUTUBE_API_KEY,
+          },
+        },
+      );
+
+      if (!videoResponse.data.items.length) {
+        return res.status(404).json({ error: "Video not found" });
       }
 
-      // Detect handle URL (@username)
-      else if (url.includes("/@")) {
-              const handle = url.split("/@")[1].split("/")[0];
+      channelId = videoResponse.data.items[0].snippet.channelId;
+    }
 
-                   const handleResponse = await axios.get(
-                             "https://www.googleapis.com/youtube/v3/search",
-                     {
-                                 params: {
-                                               part: "snippet",
-                                               q: handle,
-                                               type: "channel",
-                                               key: process.env.YOUTUBE_API_KEY,
-                                 },
-                     },
-                           );
+    if (videoId) {
+      // Fetch full video details
+      const videoDetailsResponse = await axios.get(
+        "https://www.googleapis.com/youtube/v3/videos",
+        {
+          params: {
+            part: "snippet,statistics,contentDetails",
+            id: videoId,
+            key: process.env.YOUTUBE_API_KEY,
+          },
+        },
+      );
 
-                   if (!handleResponse.data.items.length) {
-                             return res.status(404).json({ error: "Channel not found" });
-                   }
-
-                   channelId = handleResponse.data.items[0].snippet.channelId;
+      if (!videoDetailsResponse.data.items.length) {
+        return res.status(404).json({ error: "Video not found" });
       }
 
-      // Unsupported URL
-      else {
-              return res.status(400).json({ error: "Unsupported YouTube URL" });
+      const video = videoDetailsResponse.data.items[0];
+
+      // Clean video object
+      const cleanVideo = {
+        title: video.snippet.title,
+        views: Number(video.statistics.viewCount),
+        uploadedAt: video.snippet.publishedAt,
+        channelName: video.snippet.channelTitle,
+        description: video.snippet.description,
+      };
+
+      // Fetch top comments
+      let comments = [];
+      let commentsDisabled = false;
+
+      try {
+        const commentsResponse = await axios.get(
+          "https://www.googleapis.com/youtube/v3/commentThreads",
+          {
+            params: {
+              part: "snippet",
+              videoId,
+              maxResults: 20,
+              order: "relevance",
+              textFormat: "plainText",
+              key: process.env.YOUTUBE_API_KEY,
+            },
+          },
+        );
+
+        comments = commentsResponse.data.items.map(
+          (item) => item.snippet.topLevelComment.snippet.textDisplay,
+        );
+      } catch (err) {
+        if (err.response?.status === 403) {
+          commentsDisabled = true;
+          console.log("Comments unavailable for this video.");
+        } else {
+          console.error(
+            "Comment fetch error:",
+            err.response?.data || err.message,
+          );
+          commentsDisabled = true; // fallback instead of crashing
+        }
       }
 
-      // 3 Get channelId from video
-      if (!channelId) {
-              const videoResponse = await axios.get(
-                        "https://www.googleapis.com/youtube/v3/videos",
-                {
-                            params: {
-                                          part: "snippet",
-                                          id: videoId,
-                                          key: process.env.YOUTUBE_API_KEY,
-                            },
-                },
-                      );
-
-                   if (!videoResponse.data.items.length) {
-                             return res.status(404).json({ error: "Video not found" });
-                   }
-
-                   channelId = videoResponse.data.items[0].snippet.channelId;
-      }
-
-      if (videoId) {
-              // Fetch full video details
-                   const videoDetailsResponse = await axios.get(
-                             "https://www.googleapis.com/youtube/v3/videos",
-                     {
-                                 params: {
-                                               part: "snippet,statistics,contentDetails",
-                                               id: videoId,
-                                               key: process.env.YOUTUBE_API_KEY,
-                                 },
-                     },
-                           );
-
-                   if (!videoDetailsResponse.data.items.length) {
-                             return res.status(404).json({ error: "Video not found" });
-                   }
-
-                   const video = videoDetailsResponse.data.items[0];
-
-                   // Clean video object
-                   const cleanVideo = {
-                             title: video.snippet.title,
-                             views: Number(video.statistics.viewCount),
-                             uploadedAt: video.snippet.publishedAt,
-                             channelName: video.snippet.channelTitle,
-                             description: video.snippet.description,
-                   };
-
-                   // Fetch top comments
-                   let comments = [];
-              let commentsDisabled = false;
-
-                   try {
-                             const commentsResponse = await axios.get(
-                                         "https://www.googleapis.com/youtube/v3/commentThreads",
-                               {
-                                             params: {
-                                                             part: "snippet",
-                                                             videoId,
-                                                             maxResults: 20,
-                                                             order: "relevance",
-                                                             textFormat: "plainText",
-                                                             key: process.env.YOUTUBE_API_KEY,
-                                             },
-                               },
-                                       );
-
-                comments = commentsResponse.data.items.map(
-                            (item) => item.snippet.topLevelComment.snippet.textDisplay,
-                          );
-                   } catch (err) {
-                             if (err.response?.status === 403) {
-                                         commentsDisabled = true;
-                                         console.log("Comments unavailable for this video.");
-                             } else {
-                                         console.error(
-                                                       "Comment fetch error:",
-                                                       err.response?.data || err.message,
-                                                     );
-                                         commentsDisabled = true; // fallback instead of crashing
-                             }
-                   }
-
-                   // AI prompt for video
-                   const aiPrompt = `You are a YouTube video analyst.
+      // AI prompt for video
+      const aiPrompt = `You are a YouTube video analyst.
 
                    Return ONLY valid JSON with:
                    - summary
@@ -175,111 +190,112 @@ app.post("/analyze", async (req, res) => {
                    ${commentsDisabled ? "Comments are disabled." : comments.join("\n")}
                    `;
 
-                   // Call Gemini
-                   const result = await model.generateContent(
-                             "You output only valid JSON.\n\n" + aiPrompt
-                           );
-              const rawText = result.response.text();
-              const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+      // Call Gemini
+      const result = await model.generateContent(
+        "You output only valid JSON.\n\n" + aiPrompt,
+      );
+      const rawText = result.response.text();
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
 
-                   // Parse AI
-                   let analysis;
-              try {
-                        analysis = JSON.parse(jsonMatch ? jsonMatch[0] : rawText);
-              } catch {
-                        analysis = {
-                                    summary: "AI analysis failed.",
-                                    goodCommentsPercent: null,
-                                    badCommentsPercent: null,
-                                    worthWatching: "Unknown",
-                                    improvementSuggestions: "Could not generate suggestions.",
-                        };
-              }
-
-                   // RETURN VIDEO RESPONSE (IMPORTANT)
-                   return res.json({
-                             type: "video",
-                             video: cleanVideo,
-                             analysis,
-                             commentsDisabled,
-                   });
+      // Parse AI
+      let analysis;
+      try {
+        analysis = JSON.parse(jsonMatch ? jsonMatch[0] : rawText);
+      } catch {
+        analysis = {
+          summary: "AI analysis failed.",
+          goodCommentsPercent: null,
+          badCommentsPercent: null,
+          worthWatching: "Unknown",
+          improvementSuggestions: "Could not generate suggestions.",
+        };
       }
 
-      // 4 Fetch last 10 videos (for upload frequency)
-      const searchResponse = await axios.get(
-              "https://www.googleapis.com/youtube/v3/search",
-        {
-                  params: {
-                              part: "snippet",
-                              channelId,
-                              order: "date",
-                              type: "video",
-                              maxResults: 10,
-                              key: process.env.YOUTUBE_API_KEY,
-                  },
+      // RETURN VIDEO RESPONSE (IMPORTANT)
+      return res.json({
+        type: "video",
+        video: cleanVideo,
+        analysis,
+        commentsDisabled,
+      });
+    }
+
+    // 4 Fetch last 10 videos (for upload frequency)
+    const searchResponse = await axios.get(
+      "https://www.googleapis.com/youtube/v3/search",
+      {
+        params: {
+          part: "snippet",
+          channelId,
+          order: "date",
+          type: "video",
+          maxResults: 10,
+          key: process.env.YOUTUBE_API_KEY,
         },
-            );
+      },
+    );
 
-      // 5 Extract publish dates
-      const publishDates = searchResponse.data.items
-                   .map((item) => new Date(item.snippet.publishedAt))
-                   .filter((date) => !isNaN(date));
+    // 5 Extract publish dates
+    const publishDates = searchResponse.data.items
+      .map((item) => new Date(item.snippet.publishedAt))
+      .filter((date) => !isNaN(date));
 
-      // 6 Calculate upload frequency
-      let uploadFrequency = "Unknown";
-                 if (publishDates.length >= 2) {
-                         const intervals = [];
-                         for (let i = 0; i < publishDates.length - 1; i++) {
-                                   intervals.push(
-                                               Math.abs(publishDates[i] - publishDates[i + 1]) / (1000 * 60 * 60 * 24),
-                                             );
-                         }
-                         const avgDays = intervals.reduce((a, b) => a + b, 0) / intervals.length;
-                         uploadFrequency =
-                                   avgDays < 2
-                             ? "Daily"
-                                     : avgDays < 8
-                             ? "Weekly"
-                                     : avgDays < 16
-                             ? "Bi-weekly"
-                                     : avgDays < 35
-                             ? "Monthly"
-                                     : "Rarely";
-                 }
-
-      // 7 Fetch channel details
-      const channelResponse = await axios.get(
-              "https://www.googleapis.com/youtube/v3/channels",
-        {
-                  params: {
-                              part: "snippet,statistics",
-                              id: channelId,
-                              key: process.env.YOUTUBE_API_KEY,
-                  },
-        },
-            );
-
-      if (!channelResponse.data.items.length) {
-              return res.status(404).json({ error: "Channel not found" });
+    // 6 Calculate upload frequency
+    let uploadFrequency = "Unknown";
+    if (publishDates.length >= 2) {
+      const intervals = [];
+      for (let i = 0; i < publishDates.length - 1; i++) {
+        intervals.push(
+          Math.abs(publishDates[i] - publishDates[i + 1]) /
+            (1000 * 60 * 60 * 24),
+        );
       }
+      const avgDays = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+      uploadFrequency =
+        avgDays < 2
+          ? "Daily"
+          : avgDays < 8
+            ? "Weekly"
+            : avgDays < 16
+              ? "Bi-weekly"
+              : avgDays < 35
+                ? "Monthly"
+                : "Rarely";
+    }
 
-      const rawChannel = channelResponse.data.items[0];
+    // 7 Fetch channel details
+    const channelResponse = await axios.get(
+      "https://www.googleapis.com/youtube/v3/channels",
+      {
+        params: {
+          part: "snippet,statistics",
+          id: channelId,
+          key: process.env.YOUTUBE_API_KEY,
+        },
+      },
+    );
 
-      // 9 Build clean channel object
-      const cleanChannel = {
-              id: rawChannel.id,
-              name: rawChannel.snippet.title,
-              subscribers: rawChannel.statistics.hiddenSubscriberCount
-                ? null
-                        : Number(rawChannel.statistics.subscriberCount),
-              totalVideos: Number(rawChannel.statistics.videoCount),
-              description: rawChannel.snippet.description,
-              createdAt: rawChannel.snippet.publishedAt,
-              uploadFrequency,
-      };
+    if (!channelResponse.data.items.length) {
+      return res.status(404).json({ error: "Channel not found" });
+    }
 
-      // 10 Prepare AI input
-      const aiPrompt = `You are a YouTube channel analyst.
+    const rawChannel = channelResponse.data.items[0];
+
+    // 9 Build clean channel object
+    const cleanChannel = {
+      id: rawChannel.id,
+      name: rawChannel.snippet.title,
+      subscribers: rawChannel.statistics.hiddenSubscriberCount
+        ? null
+        : Number(rawChannel.statistics.subscriberCount),
+      totalVideos: Number(rawChannel.statistics.videoCount),
+      description: rawChannel.snippet.description,
+      createdAt: rawChannel.snippet.publishedAt,
+      uploadFrequency,
+    };
+
+    // 10 Prepare AI input
+    const aiPrompt = `You are a YouTube channel analyst.
 
       Analyze the channel below and return ONLY valid JSON with:
       - summary (2-3 sentences)
@@ -294,38 +310,52 @@ app.post("/analyze", async (req, res) => {
       Description: ${cleanChannel.description || "No description"}
       `;
 
-      // 11 Call Gemini
-      const result = await model.generateContent(
-              "You output only valid JSON.\n\n" + aiPrompt
-            );
-                 const rawText = result.response.text();
-                 const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+    // 11 Call Gemini
+    const result = await model.generateContent(
+      "You output only valid JSON.\n\n" + aiPrompt,
+    );
+    const rawText = result.response.text();
+    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
 
-      // 12 Parse AI output safely
-      let analysis;
-                 try {
-                         analysis = JSON.parse(jsonMatch ? jsonMatch[0] : rawText);
-                 } catch {
-                         analysis = {
-                                   summary: "AI analysis failed.",
-                                   score: null,
-                                   worthFollowing: "Unknown",
-                                   reason: "Could not parse AI output.",
-                         };
-                 }
+    // 12 Parse AI output safely
+    let analysis;
+    try {
+      analysis = JSON.parse(jsonMatch ? jsonMatch[0] : rawText);
+    } catch {
+      analysis = {
+        summary: "AI analysis failed.",
+        score: null,
+        worthFollowing: "Unknown",
+        reason: "Could not parse AI output.",
+      };
+    }
 
-      // 13 Final response
-      res.json({
-              type: "channel",
-              channel: cleanChannel,
-              analysis,
+    // 13 Final response
+    res.json({
+      type: "channel",
+      channel: cleanChannel,
+      analysis,
+    });
+  } catch (error) {
+    console.error(error.response?.data || error.message);
+
+    const status = error.status || error.response?.status;
+
+    if (
+      status === 503 ||
+      error.message?.includes("[503 Service Unavailable]")
+    ) {
+      return res.status(503).json({
+        error: "The AI service is temporarily busy. Please try again shortly.",
       });
-           } catch (error) {
-                 console.error(error.response?.data || error.message);
-                 res.status(500).json({ error: "Failed to analyze YouTube channel" });
-           }
+    }
+
+    return res.status(500).json({
+      error: "Failed to analyze YouTube content. Please try again.",
+    });
+  }
 });
 
 app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });

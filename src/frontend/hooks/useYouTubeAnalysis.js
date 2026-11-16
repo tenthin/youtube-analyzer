@@ -79,12 +79,23 @@ export function useYouTubeAnalysis() {
       return;
     }
 
-    const isYouTubeUrl =
-      url.includes("youtube.com") ||
-      url.includes("youtu.be") ||
-      url.includes("m.youtube.com");
+        let parsedUrl;
 
-    if (!isYouTubeUrl) {
+    try {
+      parsedUrl = new URL(url.trim());
+    } catch {
+      setError("Please enter a valid YouTube URL");
+      return;
+    }
+
+    const allowedHosts = [
+      "youtube.com",
+      "www.youtube.com",
+      "m.youtube.com",
+      "youtu.be",
+    ];
+
+    if (!allowedHosts.includes(parsedUrl.hostname)) {
       setError("Please enter a valid YouTube URL");
       return;
     }
@@ -157,7 +168,7 @@ export function useYouTubeAnalysis() {
     } finally {
       setLoading(false);
     }
-  },[]);
+  },[CACHE_EXPIRATION]);
 
   return {
     analyze,
