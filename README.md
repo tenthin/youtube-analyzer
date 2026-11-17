@@ -118,7 +118,7 @@ Handles real-world API edge cases:
 - Node.js
 - Express
 - YouTube Data API v3
-- OpenAI API (GPT-4o-mini)
+- Google Gemini API
 - Axios
 
 ---
@@ -136,7 +136,7 @@ cd youtube-analyzer
 - cd src/backend
 - npm install
 
-### Create a .env file:
+### Create a src/backend/.env file:
 
 - YOUTUBE_API_KEY=your_youtube_api_key
 - GOOGLE_API_KEY=your_google_api_key
@@ -156,7 +156,7 @@ cd youtube-analyzer
     ↓
 -Backend (Express API)
     ↓
--YouTube Data API + OpenAI API
+-YouTube Data API + Gemini API
 ```
 
 ### 📌 Real-World Problems Solved
@@ -181,5 +181,3 @@ cd youtube-analyzer
 - Rate limiting middleware
 
 - Authentication & saved accounts
-
-- Deployment (Vercel + Render)
