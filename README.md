@@ -133,20 +133,34 @@ cd youtube-analyzer
 ```
 
 ### 2️⃣ Backend Setup
+```bash
 - cd src/backend
 - npm install
+``` 
 
 ### Create a src/backend/.env file:
-
+```bash
 - YOUTUBE_API_KEY=your_youtube_api_key
-- GOOGLE_API_KEY=your_google_api_key
+- GOOGLE_API_KEY=your_gemini_api_key
+```
 
 ### Run backend:
+```bash
 - node index.js
+```
 
 ### 3️⃣ Frontend Setup
+
+Form the project root,  create `.env` (copy `.env.example`)
+
+```
+VITE_BACKEND_URL=http://localhost:5000
+```
+Then run:
+```bash
 - npm install
 - npm run dev
+```
 
 ### 🧩 Architecture Overview
 ```bash
