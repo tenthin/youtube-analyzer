@@ -12,12 +12,12 @@ Users can paste any YouTube video or channel URL and receive:
 
 ---
 
-```
+
 ## 🌟 Live Demo
 
 🔗 Live Site:  https://youtube-analyzer-01.netlify.app/  
 📂 Repository:  https://github.com/tenthin/youtube-analyzer
-```
+
 ---
 
 ## ✨ Core Features
