@@ -15,8 +15,8 @@ Users can paste any YouTube video or channel URL and receive:
 ```
 ## 🌟 Live Demo
 
-🔗 **Live Site:** https://youtube-analyzer-01.netlify.app/  
-📂 **Repository:** https://github.com/tenthin/youtube-analyzer
+🔗 Live Site:  https://youtube-analyzer-01.netlify.app/  
+📂 Repository:  https://github.com/tenthin/youtube-analyzer
 ```
 ---
 
@@ -128,7 +128,7 @@ Handles real-world API edge cases:
 ### 1️⃣ Clone Repository
 
 ```bash
-git clone https://github.com/your-username/youtube-analyzer.git
+git clone https://github.com/tenthin/youtube-analyzer.git
 cd youtube-analyzer
 ```
 
