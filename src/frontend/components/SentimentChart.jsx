@@ -25,7 +25,7 @@ function SentimentChart({ goodPercent, badPercent }) {
   return (
     <div className="mt-4">
       {/* Toggle Buttons */}
-      <div className="flex gap-3 mb-4">
+      <div className="flex gap-4 mb-4">
         <button
           onClick={() => setChartType("bar")}
           className={`px-3 py-1 rounded ${
@@ -56,7 +56,7 @@ function SentimentChart({ goodPercent, badPercent }) {
             <BarChart data={data}>
               <XAxis dataKey="name" />
               <YAxis />
-              <Tooltip />
+              <Tooltip cursor={false}/>
               <Bar dataKey="value" fill="#2563eb" />
             </BarChart>
           </ResponsiveContainer>

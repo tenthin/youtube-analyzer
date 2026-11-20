@@ -49,54 +49,59 @@ function Analyze() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto  sm:px-6 ">
-      <div className="text-center mt-10 mb-4">
-        <h1 className="text-4xl font-bold mb-3">YouTube Analyzer</h1>
-
-        <p className="text-gray-600 max-w-xl mx-auto">
-          Instantly analyze any YouTube video or channel using AI. Get
-          summaries, sentiment insights, and a smart recommendation.
+    <div className="">
+      {/* HERO PAGE */}
+      <div className="mx-auto bg-red-600 px-4 py-12 text-center sm:px-6 sm:py-16">
+        <h1 className="mb-3 text-3xl font-bold text-white sm:text-4xl md:text-7xl">YouTube Analyzer</h1>
+        <p className="mx-auto max-w-xl text-base text-white text-sm sm:text-xl">
+          Instantly analyze any YouTube video or channel using AI.{" "}
+          Get summaries, sentiment insights, and a smart recommendation.
         </p>
       </div>
-      <div className="bg-white shadow-md rounded-xl p-6 ">
+      {/* SEARCH */}
+      <div className="mx-4 rounded-xl bg-white p-4 shadow-md sm:mx-6 sm:p-6 lg:mx-auto lg:max-w-5xl mt-5">
         <form
           onSubmit={handleSubmit}
-          className="text-center flex flex-col sm:flex-row justify-center gap-3 "
+          className="flex flex-col justify-center gap-3 text-center sm:flex-row "
         >
           <input
             type="text"
             placeholder="Enter the URL..."
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            className="w-full max-w-xl p-3 border rounded-lg"
+            className="w-full min-w-0 rounded-lg border p-3"
           />
           <button
-            className="bg-black hover:bg-red-800 transition duration-200 px-6 py-3 text-white rounded-lg w-full sm:w-auto cursor-pointer"
-            type="submit"
+            className="w-full cursor-pointer rounded-lg bg-black px-6 py-3 text-white transition duration-200 hover:bg-red-800 sm:w-auto"
             disabled={loading}
           >
             {loading ? "Analyzing..." : "Analyze"}
           </button>
         </form>
+
+        {/* Suggestion */}
+        <div className="text-sm text-gray-500 mt-2 text-center ">
+          Try:
+          <button
+            onClick={() =>
+              setUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+            }
+            className="ml-2 underline hover:text-black"
+          >
+            Sample Video
+          </button>
+          |
+          <button
+            onClick={() => setUrl("https://www.youtube.com/@MrBeast")}
+            className="ml-2 underline hover:text-black"
+          >
+            Sample Channel
+          </button>
+        </div>
       </div>
-      <div className="text-sm text-gray-500 mt-2">
-        Try:
-        <button
-          onClick={() => setUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ")}
-          className="ml-2 underline hover:text-black"
-        >
-          Sample Video
-        </button>
-        |
-        <button
-          onClick={() => setUrl("https://www.youtube.com/@MrBeast")}
-          className="ml-2 underline hover:text-black"
-        >
-          Sample Channel
-        </button>
-      </div>
-      <div className="flex gap-5 flex-col lg:flex-row mt-8">
-        <div className="w-full lg:w-2/3">
+
+      <div className="p-3 sm:p-5 lg:p-6 flex gap-5 flex-col lg:flex-row ">
+        <div className="w-full xl:w-2/3">
           {loading && <SkeletonResult />}
 
           {!loading && error && (
@@ -106,7 +111,7 @@ function Analyze() {
             />
           )}
           {!loading && !error && !result && (
-            <div className="mt-6 p-8 text-center rounded-lg bg-white shadow-sm">
+            <div className="rounded-lg bg-white p-3 shadow-sm sm:p-5 lg:p-6">
               <h3 className="text-lg font-semibold mb-2">Ready to analyze?</h3>
               <p className="text-gray-600">
                 Paste a YouTube video or channel link above to get started.
@@ -114,7 +119,7 @@ function Analyze() {
             </div>
           )}
           {!loading && !error && type === "channel" && channel && analysis && (
-            <div className="mt-6 p-4 bg-white shadow-sm rounded-lg p-6">
+            <div className="p-7 bg-white shadow-sm rounded-lg">
               <h3 className="font-semibold text-lg mb-2">
                 Channel AI Analysis
               </h3>
@@ -138,7 +143,7 @@ function Analyze() {
           )}
 
           {!loading && !error && type === "video" && video && analysis && (
-            <div className=" mt-6 p-4 rounded-lg bg-white shadow-sm">
+            <div className="p-7 rounded-lg bg-white shadow-sm">
               <div className="flex flex-wrap gap-3 mb-4">
                 <button
                   onClick={() => setActiveTab("overview")}
@@ -192,7 +197,7 @@ function Analyze() {
                 </>
               )}
               {activeTab === "sentiment" && (
-                <div className="mt-4 p-4 bg-gray-50 rounded">
+                <div className=" x-4 bg-gray-50 rounded">
                   {commentsDisabled ? (
                     <p className="text-yellow-600 font-medium">
                       Comments are disabled for this video.
@@ -220,7 +225,7 @@ function Analyze() {
             </div>
           )}
         </div>
-        <div className="w-full lg:w-1/3 bg-white shadow-sm rounded-xl">
+        <div className="w-full rounded-xl bg-white shadow-sm xl:w-1/3">
           <HistoryPanel
             history={history}
             onSelect={handleHistorySelect}

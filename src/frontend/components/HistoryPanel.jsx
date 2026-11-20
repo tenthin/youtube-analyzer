@@ -41,7 +41,7 @@ function HistoryPanel({ history, onSelect, onRemove, onClear, activeURL }) {
             </div>
             <button
               onClick={() => onRemove(item.url)}
-              className="cursor-pointer opacity-0 group-hover:opacity-100 transition"
+              className="cursor-pointer"
             >
               <i className="fa-solid fa-trash"></i>
             </button>
